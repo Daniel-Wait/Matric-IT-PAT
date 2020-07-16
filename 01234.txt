@@ -1,0 +1,69 @@
+1
+:2015/12/08
+>No known medications
++Added to database
+-Jane Doe
+*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+:2016-7-20
+>None, 0,0 units of None
++memNotes
+-marlone sanders
+*
+0
+:2016-7-20
+>None, 0,0 units of None
++memNotes
+-marlone sanders
+*
+0
+:2016-7-20
+>None, 0,0 units of None
++memNotes
+-marlone sanders
+*
+6
+:2016/7/20
+>Glibenclamide, 18,0 units of Long Acting Insulin
++Second trial
+-marlone sanders
+*
+13
+:2016/7/20
+>No Pills, 0,0 units of No Insulin
++memNotes
+-marlone sanders
+*

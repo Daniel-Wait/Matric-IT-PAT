@@ -1,0 +1,165 @@
+unit diabetic_u;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ComCtrls, StdCtrls, ExtCtrls, Spin, Grids, DBGrids, dmHospitalDB_u, patient_u, clsPatient_u;
+
+type
+  TfrmDiabetic = class(TForm)
+    pnlMeasure: TPanel;
+    lblHeight: TLabel;
+    lblWeight: TLabel;
+    lblWaist: TLabel;
+    lblHR: TLabel;
+    lblMeasurements: TLabel;
+    edtHeight: TEdit;
+    sedHR: TSpinEdit;
+    pnlBP: TPanel;
+    lblSystolic: TLabel;
+    lblDiastolic: TLabel;
+    lblBP: TLabel;
+    sedSystolic: TSpinEdit;
+    sedDiastolic: TSpinEdit;
+    pnlGlucose: TPanel;
+    lblBG: TLabel;
+    lblFasting: TLabel;
+    lblPP: TLabel;
+    lblOvernight: TLabel;
+    edtOvernight: TEdit;
+    edtFasting: TEdit;
+    pnlVascular: TPanel;
+    lblVascular: TLabel;
+    cbxMicro: TCheckBox;
+    cbxMacro: TCheckBox;
+    lblPM: TLabel;
+    lblNotes: TLabel;
+    memNotes: TMemo;
+    rgpPills: TRadioGroup;
+    rgpInsulin: TRadioGroup;
+    ledInsDos: TLabeledEdit;
+    btnCheck: TButton;
+    redCheck: TRichEdit;
+    pnlFinal: TPanel;
+    btnDone: TButton;
+    btnReset: TButton;
+    edtPP: TEdit;
+    dbgDiabetc: TDBGrid;
+    lblDiabeticRecords: TLabel;
+    rgpClassification: TRadioGroup;
+    pnlHbA1c: TPanel;
+    lblA1cLevel: TLabel;
+    lblHbA1c: TLabel;
+    cbxHbA1c: TCheckBox;
+    edtHbA1c: TEdit;
+    sedWaist: TSpinEdit;
+    sedWeight: TSpinEdit;
+    procedure FormShow(Sender: TObject);
+    procedure memNotesClick(Sender: TObject);
+    procedure btnCheckClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmDiabetic: TfrmDiabetic;
+  objDiabetic : TDiabeticPatient;
+  cGender : char;
+  sDiabeticDiagnosis, sGender, sPills, sInsulin : string;
+  bMacrovascular, bMicrovascular, bEpi, bAsm, bTB, bHypTns : boolean;
+  iAge, iDiastolic, iSystolic, iHeartRate, iWeight, iWaist : integer;
+  rFasting, rPostprandial, rOverNight, rHeight, rInsulinDosage : real;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmDiabetic.FormShow(Sender: TObject);
+begin
+  with dmhospital do
+    begin
+      qryMinor.SQL.Clear;
+      qryMinor.SQL.Add('SELECT * FROM DiabeticClinic WHERE ID = "' + frmPatientData.sID + '" AND FolderNumber = ' + frmPatientData.sFolder + '" ORDER BY DateAndTime DESC');
+      qryMinor.Open;
+    end;
+end;
+
+procedure TfrmDiabetic.memNotesClick(Sender: TObject);
+begin
+  memNotes.Lines.Clear;
+  memNotes.SetFocus;
+end;
+
+procedure TfrmDiabetic.btnCheckClick(Sender: TObject);
+begin
+  iDiastolic := sedDiastolic.Value;
+  iSystolic := sedSystolic.Value;
+  rFasting := StrToFloat(edtFasting.Text);
+  rOverNight := StrToFloat(edtOvernight.Text);
+  rPostprandial := StrToFloat(edtPP.Text);
+  rHeight := StrToFloat(edtHeight.Text);
+  iHeartRate := sedHR.Value;
+  iWeight := sedWeight.Value;
+  iWaist := sedWaist.Value;
+
+  if cbxMicro.Checked = True then
+    bMicrovascular := True
+    else bMicrovascular := False;
+
+  if cbxMacro.Checked = True then
+    bMacrovascular := True
+    else bMacrovascular := False;
+
+  case rgpPills.ItemIndex of
+    0: sPills := 'Netforeman';
+    1: sPills := 'Glimepramide';
+    2: sPills := 'Glyclozide';
+    3: sPills := 'Glibenclamide';
+  end;
+
+  case rgpInsulin.ItemIndex of
+    0: sInsulin := 'Rapid Acting Insulin';
+    1: sInsulin := 'Short Acting Insulin';
+    2: sInsulin := 'Long Acting Insulin';
+    3: sInsulin := 'Ultra-Long Acting Insulin';
+    4: sInsulin := 'Actrofane';
+    5: sInsulin := 'Humolog';
+    6: sInsulin := 'Insuman';
+  end;
+
+  rInsulinDosage := StrToFloat(ledInsDos.Text);
+
+  objDiabetic := TDiabeticPatient.Create(frmPatientData.sFolder, iDiastolic, iSystolic, rFasting, rOverNight, rPostprandial, rHeight, iHeartRate, iWeight, iWaist, bMicrovascular, bMacrovascular, sPills, sInsulin, rInsulinDosage);
+
+  if cbxHbA1c.Checked = True then
+    begin
+      objDiabetic.SetHbA1c(StrToFloat(edtHbA1c.Text));
+    end;
+
+  with dmHospital do
+    begin
+      qryHospitalDB.SQL.Clear;
+      qryHospitalDB.SQL.Add('SELECT Age, Gender FROM PatientInfo WHERE FolderNumber = "' + frmPatientData.sFolder + '"');
+      qryHospitalDB.First;
+      iAge := qryHospitalDB['Age'];
+      sGender := qryHospitalDB['Gender'];
+      cGender := sGender[1];
+      objDiabetic.SetAge(iAge);
+      objDiabetic.SetGender(cGender);
+      qryMinor.SQL.Clear;
+      qryMinor.SQL.Add('SELECT * FROM GeneralHealth WHERE FolderNumber = "' + frmPatientData.sFolder + '"');
+      qryMinor.First;
+      bEpi := qryMinor['Eplilepsy'];
+      bAsm := qryMinor['Asthma'];
+      bTB := qryMinor['TB'];
+      bHypTns := qryMinor['HyperTension'];
+      sDiabeticDiagnosis := DateToStr(qryMinor['DiagnosisDiabetic']);
+      objDiabetic.SetDEATH(bepi, bAsm, bTB, bHypTns);
+      objDiabetic.SetDiagnosisDate(sDiabeticDiagnosis);
+    end;
+end;
+
+end.

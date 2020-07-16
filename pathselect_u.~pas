@@ -1,0 +1,30 @@
+unit pathselect_u;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, Buttons, StdCtrls;
+
+type
+  TfrmPathSelect = class(TForm)
+    lblUser: TLabel;
+    lblJob: TLabel;
+    btnDepts: TButton;
+    bmbBack: TBitBtn;
+    btnPatients: TButton;
+    btnEmployees: TButton;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmPathSelect: TfrmPathSelect;
+
+implementation
+
+{$R *.dfm}
+
+end.

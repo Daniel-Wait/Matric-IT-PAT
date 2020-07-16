@@ -1,0 +1,303 @@
+unit clsPatient_u;
+
+interface
+
+uses
+  Windows, Messages, DateUtils, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, Math;
+
+type
+  TDiabeticPatient = class(TObject)
+  private
+    fYears : integer;
+    fCheckA1C : boolean;
+    fAge : integer;
+    fHbA1c : real;
+    fDiagnosisDate : string;
+    fFolder : string;
+    fDiastolic : integer;
+    fSystolic : integer;
+    fFasting : real;
+    fOvernight : real;
+    fPostPrandial : real;
+    fHeartRate : integer;
+    fHeight : real;
+    fWeight : integer;
+    fWaist : integer;
+    fBMI : real;
+    fMicro : boolean; //eye, kidney, peripheral nerve damage
+    fMacro : boolean; //strokes, heart-attack, arterial damgae (larger arteries e.g. in legs)
+    fPills : string;
+    fInsulin : string;
+    fInsDos : real;
+    fEpilepsy : boolean;
+    fAsthma : boolean;
+    fTB : boolean;
+    fHypertension : boolean;
+  public
+    constructor Create(sFld, sDate : string; iDiast, iSyst: integer; rFast, rOvrNt, rPP,
+                rHt : real; iHR, iWeight, iWaist : integer; bMicro, bMacro : boolean;
+                sPills, sIns : string; rInsDos : real);
+    function CalcBMI : real;
+    function BloodSugarCheck : string;
+    procedure SetAge(iAge: integer);
+    procedure SetHbA1c(rA1c: real);
+    procedure SetDEATH(bE, bA, bT, bH : boolean);
+    function DEATH(bE, bA, bT, bH: boolean): string;
+    function ProcessBP : string;
+    function ToStr : string;
+end;
+
+implementation
+
+{ TDiabeticPatient }
+
+function TDiabeticPatient.ToStr: string;
+var
+  sTS, sBMI : string;
+begin
+  CalcBMI;
+  if fBMI < 18.5 then
+    sBMI := 'Body Mass Index: ' + FloatToStrF(fBMI, ffFixed, 3, 2) + '  *small BMI ratio';
+
+  if (fBMI >= 18.5) AND (fBMI <= 24.9) then
+    sBMI := 'Body Mass Index: ' + FloatToStrF(fBMI, ffFixed, 3, 2);
+
+  if (fBMI > 24.9) AND (fBMI <= 29.9) then
+    sBMI := 'Body Mass Index: ' + FloatToStrF(fBMI, ffFixed, 3, 2) + '  *large BMI ratio';
+
+  if fBMI > 29.9 then
+    sBMI := 'Body Mass Index: ' + FloatToStrF(fBMI, ffFixed, 3, 2) + '  *BMI ratio indicates obesity';
+
+  sTS := 'Folder Number: ' + fFolder + #13 + 'Age: ' + IntToStr(fAge);
+  sTS := sTS + #13 + 'Years Diabetic: ' + IntToStr(fYears) + #13 + 'Height: ' + FloatToStrF(fHeight, ffFixed, 1, 2);
+  sTS := sTS + #13 + 'Weight: ' + IntToStr(fWeight) + #13 + 'Waist Circumference: ';
+  sTS := sTS + IntToStr(fWaist) + #13 + sBMI + #13+ #13;
+  sTs := sTS + ProcessBP + #13 + #13 + BloodSugarCheck + #13 + #13;
+  sTS := sTS + 'Pills: ' + fPills + #13;
+  sTS := sTS + 'Insulin: ' + fInsulin + #13;
+
+  if (fYears <= 10) AND (fAge <= 30) then
+    sTS := sTS + 'Dosage: ' + FLoatToStrF(fInsDos, ffFixed, 2, 1) + '  *suggested dosage = ' + FloatToStrF((fWeight * 0.3), ffFixed, 3, 1);
+
+  if (fYears <= 10) AND (fAge > 30) then
+    sTS := sTS + 'Dosage: ' + FLoatToStrF(fInsDos, ffFixed, 2, 1) + '  *suggested dosage = ' + FloatToStrF((fWeight * 0.6), ffFixed, 3, 1);
+
+  if (fYears > 10) then
+    sTS := sTS + 'Dosage: ' + FLoatToStrF(fInsDos, ffFixed, 2, 1) + '  *suggested dosage = ' + IntToStr(fWeight);
+
+  Result := sTS + #13 + DEATH(fEpilepsy, fAsthma, fTB, fHypertension);
+end;
+
+function TDiabeticPatient.BloodSugarCheck: string;
+var
+  sFast, sPP, sOver, sHbA1c : string;
+begin
+  sHbA1c := '';
+  if (fAge < 18) then
+  begin
+    ShowMessage('Patient should be referred to Pediatrics.');
+  end;
+
+  //conditions: young, low risk, newly diagnosed, no cardiovascular disease, HbA1c < 6.5%, FPG 4 - 7, PPG 4.4- 7.8, OvrNt +- 7 preferably >5
+  if (fAge >= 18) AND (fAge <= 35) then
+    begin
+      if (fFasting < 4) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fFasting >= 4) AND (fFasting <= 7) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2);
+      if (fFasting > 7) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fPostPrandial < 4.4) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fPostPrandial >= 4.4) AND (fPostPrandial <= 7.8) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2);
+      if (fPostPrandial > 7.8) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fOvernight < 5) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fOvernight >= 5) AND (fFasting <= 8.3) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2);
+      if (fOvernight > 8.3) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fCheckA1c = True) then
+        begin
+          if fHbA1c < 6.5 then
+            begin
+              sHbA1c := 'HbA1c level: ' + FloatToStrF(fHbA1c, ffFixed, 3, 3);
+            end
+          else
+            begin
+              sHbA1c := 'HbA1c level: ' + FloatToStrF(fHbA1c, ffFixed, 3, 3) + '  *needs monitoring';
+            end;
+        end;
+    end;
+
+  //majority, HbA1c < 7%, FPG 4 - 7, PPG 5 - 10, OvrNt +- 7
+  if (35 < fAge) AND(fAge <= 55) then
+    begin
+    if (fFasting < 4) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fFasting >= 4) AND (fFasting <= 7) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2);
+      if (fFasting > 7) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fPostPrandial < 5) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fPostPrandial >= 5) AND (fPostPrandial <= 10) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2);
+      if (fPostPrandial > 10) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fOvernight < 5) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fOvernight >= 5) AND (fFasting <= 8.3) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2);
+      if (fOvernight > 8.3) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fCheckA1c = True) then
+        begin
+          if fHbA1c < 7 then
+            begin
+              sHbA1c := 'HbA1c level: ' + FloatToStrF(fHbA1c, ffFixed, 3, 3);
+            end
+          else
+            begin
+              sHbA1c := 'HbA1c level: ' + FloatToStrF(fHbA1c, ffFixed, 3, 3) + '  *needs monitoring';
+            end;
+        end;
+    end;
+
+  //elderly, high risk, hypoglycaemic unaware, poor short-term prognosis, HbA1c < 7.5%, FPG 4 - 7, PPG < 12, OvrNt +- 7 - 10
+  if (fAge > 55) then
+    begin
+    if (fFasting < 4) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fFasting >= 4) AND (fFasting <= 7) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2);
+      if (fFasting > 7) then
+        sFast := 'Fasting Blood Sugar: ' + FloatToStrF(fFasting, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fPostPrandial < 7) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fPostPrandial >= 7) AND (fPostPrandial <= 12) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2);
+      if (fPostPrandial > 12) then
+        sPP := 'Postprandial Blood Sugar: ' + FloatToStrF(fPostPrandial, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      if (fOvernight < 6) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2) + '  *possibly hypoglycaemic';
+      if (fOvernight >= 6) AND (fFasting <= 9) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2);
+      if (fOvernight > 9) then
+        sOver := 'Overnight Blood Sugar: ' + FloatToStrF(fOvernight, ffFixed, 3, 2) + '  *possibly hyperglycaemic';
+
+      sHbA1c := 'HbA1c Not Checked.';
+      if (fCheckA1c = True) then
+        begin
+          if fHbA1c < 7.5 then
+            begin
+              sHbA1c := 'HbA1c level: ' + FloatToStrF(fHbA1c, ffFixed, 3, 3);
+            end
+          else
+            begin
+              sHbA1c := 'HbA1c level: ' + FloatToStrF(fHbA1c, ffFixed, 3, 3) + '  *needs monitoring';
+            end;
+        end;
+    end;
+
+    Result := 'BLOOD SUGAR' + #13 + sFast + #13 + sPP + #13 + sOver + #13 + sHbA1c;
+end;
+
+function TDiabeticPatient.CalcBMI: real;
+begin
+  fBMI := fWeight / (fHeight * fHeight);
+  Result := fBMI;
+end;
+
+constructor TDiabeticPatient.Create(sFld, sDate : string; iDiast, iSyst : integer; rFast, rOvrNt, rPP,
+  rHt: real; iHR, iWeight, iWaist: integer; bMicro, bMacro: boolean; sPills,
+  sIns: string; rInsDos: real);
+begin
+  fDiagnosisDate := sDate;
+  fYears := YearOf(Today) - StrToInt(Copy(sDate, 1, 4)) + 1;
+  fCheckA1C := False;
+  fAge := 18;
+  fHbA1c := 0;
+  fDiagnosisDate := '2016-12-30';
+  fFolder := sFld;
+  fDiastolic := iDiast;
+  fSystolic := iSyst;
+  fFasting := rFast;
+  fOvernight := rOvrNt;
+  fPostPrandial := rPP;
+  fHeartRate := iHR;
+  fHeight := rHt;
+  fWeight := iWeight;
+  fWaist := iWaist;
+  fMicro := bMicro;
+  fMacro := bMacro;
+  fPills := sPills;
+  fInsulin := sIns;
+  fInsDos := rInsDos;
+  fEpilepsy := False;
+  fAsthma := False;
+  fTB := False;
+  fHypertension := False;
+end;
+
+function TDiabeticPatient.DEATH(bE, bA, bT, bH: boolean) :string;
+begin
+  Result := 'Issues of Concern: Diabtetes';
+
+  if bE = True then
+    Result := Result + ', Epilepsy';
+
+  if bA = True then
+    Result := Result + ', Asthma';
+
+  if bT = True then
+    Result := Result + ', TB';
+
+  if bH = True then
+    Result := Result + ', Hypertension';
+end;
+
+function TDiabeticPatient.ProcessBP: string;
+begin
+  if fAge >= 40 then
+    begin
+      Result := 'BLOOD PRESSURE' + #13 + 'Systolic: ' + IntToStr(fSystolic) + '  *Target = 130' + #13 + 'Diastolic: ' + IntToStr(fDiastolic) + '  * Target = 80';
+    end
+  else
+    begin
+      Result := 'BLOOD PRESSURE' + #13 + 'Systolic: ' + IntToStr(fSystolic) + '  *Target = 120' + #13 + 'Diastolic: ' + IntToStr(fDiastolic) + '  * Target = 80';
+    end;
+end;
+
+procedure TDiabeticPatient.SetAge(iAge: integer);
+begin
+  fAge := iAge;
+end;
+
+procedure TDiabeticPatient.SetHbA1c(rA1c: real);
+begin
+  fCheckA1c := True;
+  fHbA1c := rA1c;
+end;
+
+procedure TDiabeticPatient.SetDEATH(bE, bA, bT, bH: boolean);
+begin
+  fEpilepsy := bE;
+  fAsthma := bA;
+  fTB := bT;
+  fHypertension := bH;
+end;
+
+end.
+

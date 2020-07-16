@@ -1,0 +1,27 @@
+
+
+New Diabetic 0.3 units/kg
+		0.6units
+5-10 years 1 unit/kg
+
+function DEATH(bE, bA, bT, bH: boolean): string;
+function TDiabeticPatient.DEATH(bE, bA, bT, bH: boolean) :string;
+begin
+  fEpilepsy := bE;
+  fAsthma := bA;
+  fTB := bT;
+  fHypertension := bH;
+  Result := 'Issues of Concern: Diabtetes';
+
+  if fEpilepsy = True then
+    Result := Result + ', Epilepsy';
+
+  if fAsthma = True then
+    Result := Result + ', Asthma';
+
+  if fTB = True then
+    Result := Result + ', TB';
+
+  if fHypertension = True then
+    Result := Result + ', Hypertension';
+end;

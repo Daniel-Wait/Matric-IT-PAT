@@ -1,0 +1,190 @@
+K := 0;
+  while NOT EOF(tMed) do
+    begin
+      Readln(tMed, sLine);
+      Inc(K);
+    end;
+
+  bFound := False;
+  SetLength(arrHistory, K, 13);
+  iRow := -1;
+  iCol := 0;
+
+  while NOT EOF(tMed) do
+    begin
+      Inc(iRow);
+      sRec := '';
+      Readln(tMed, sLine);
+      
+      if sLine = 'General' then
+        iCol := 0;
+      if sLine = 'CardioCirculatory' then
+        iCol := 1;
+      if sLine = 'Endocrine' then
+        iCol := 2;
+      if sLine = 'ENT' then
+        iCol := 3;
+      if sLine = 'GastroIntestinal' then
+        iCol := 4;
+      if sLine = 'GenitoUrinary' then
+        iCol := 5;
+      if sLine = 'Macrovascular' then
+        iCol := 6;
+      if sLine = 'Microvascular' then
+        iCol := 7;
+      if sLine = 'MuscularSkeletal' then
+        iCol := 8;
+      if sLine = 'Neurological' then
+        iCol := 9;
+      if sLine = 'Opthalmology' then
+        iCol := 10;
+      if sLine = 'Respiratory' then
+        iCol := 11;
+      if sLine = 'Rheumotology' then
+        iCol := 12;
+
+      repeat
+        Readln(tMed, sLine);
+
+        case sLine[1] of
+          '*': bFound := True;
+
+          ':': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + 'Date: ' + sLine;
+               end;
+
+          '>': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Medication: ' + sLine;
+               end;
+
+          '+': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Notes: ' + sLine;
+               end;
+
+          '-': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Seen By: ' + sLine;
+               end
+
+          else sRec := sRec + #13 + sLine
+        end;
+      until bFound = True;
+
+       arrHistory[iRow, iCol] := sRec;
+    end;
+
+    J := 0;
+    for L := 0 to 12 do
+      begin
+        case L of
+          0: sHeader := 'General';
+          1: sHeader := 'CardioCirculatory';
+          2: sHeader := 'Endocrine';
+          3: sHeader := 'ENT';
+          4: sHeader := 'GastroIntestinal';
+          5: sHeader := 'GenitoUrinary';
+          6: sHeader := 'Macrovascular';
+          7: sHeader := 'Microvascular';
+          8: sHeader := 'MuscularSkeletal';
+          9: sHeader := 'Neurological';
+          10: sHeader := 'Opthalmology';
+          11: sHeader := 'Respiratory';
+          12: sHeader := 'Rheumotology';
+        end;
+        redMedicalHistory.Lines.Add(UpperCase(sHeader));
+        bStop := False;
+
+        while NOT(bStop) do
+          begin
+            sOut := arrHistory[J, L];
+
+            if sOut <> '' then
+              begin
+                redMedicalHistory.Lines.Add(sOut);
+                redMedicalHistory.Lines.Add('');
+                Inc(J);
+              end
+            else
+              begin
+                redMedicalHistory.Lines.Add('');
+                bStop := True;
+              end;
+          end;
+      end;
+end;
+
+
+
+
+
+
+
+
+
+  //redMedicalHistory
+  redMedicalHistory.Lines.Clear;
+  redMedicalHistory.Lines.Add('MEDICAL HISTORY' + #13 + ' ' + #13);
+
+  for K := 0 to 13 do
+    begin
+      AssignFile(tMed, sFolder + IntToStr(K) + '.txt');
+
+      Try
+        Reset(tMed);
+      Except
+        ShowMessage('Could not locate file ' + sFolder + '.txt');
+        Exit;
+      End;
+
+      case K of
+          0: sHeader := 'General';
+          1: sHeader := 'CardioCirculatory';
+          2: sHeader := 'Endocrine';
+          3: sHeader := 'ENT';
+          4: sHeader := 'GastroIntestinal';
+          5: sHeader := 'GenitoUrinary';
+          6: sHeader := 'Macrovascular';
+          7: sHeader := 'Microvascular';
+          8: sHeader := 'MuscularSkeletal';
+          9: sHeader := 'Neurological';
+          10: sHeader := 'Opthalmology';
+          11: sHeader := 'Respiratory';
+          12: sHeader := 'Rheumotology';
+          13: sHeader := 'Unidentified Issue';
+      end;
+
+      while NOT(EOF(tMed)) do
+        begin
+          Readln(tMed, sLine);
+
+          case sLine[1] of
+          '*': sLine := ' ';
+
+          ':': begin
+                 Delete(sLine, 1, 1);
+                 sLine := sLine + 'Date: ' + sLine;
+               end;
+
+          '>': begin
+                 Delete(sLine, 1, 1);
+                 sLine := 'Medication: ' + sLine;
+               end;
+
+          '+': begin
+                 Delete(sLine, 1, 1);
+                 sLine := 'Notes: ' + sLine;
+               end;
+
+          '-': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Seen By: ' + sLine;
+               end
+
+          else sLine := sLine;
+        end;
+          end;
+        end;
+    end;

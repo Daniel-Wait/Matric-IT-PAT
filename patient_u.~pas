@@ -1,0 +1,275 @@
+unit patient_u;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, Grids, DBGrids, StdCtrls, ComCtrls, Buttons, ExtCtrls, depts_u, dmHospitalDB_u;
+
+type
+  TfrmPatientData = class(TForm)
+    pnlPatient: TPanel;
+    lblPatientInfo: TLabel;
+    lblD: TLabel;
+    lblFolder: TLabel;
+    edtFolder: TEdit;
+    edtID: TEdit;
+    BitBtn1: TBitBtn;
+    redMedicalHistory: TRichEdit;
+    dbgPatientInfo: TDBGrid;
+    dbgBloodResults: TDBGrid;
+    pnlPFinal: TPanel;
+    btnNext: TBitBtn;
+    btnClose: TBitBtn;
+    procedure BitBtn1Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure btnNextClick(Sender: TObject);
+  private
+
+    procedure LoadData;
+    //procedure Anst;
+    //procedure ENT;
+    //procedure Haemo;
+    procedure Med;
+    //procedure Neuro;
+    //procedure ObGyn;
+    //procedure Onco;
+    //procedure Orth;
+    //procedure Ped;
+    //procedure Phrm;
+    //procedure Phys;
+    //procedure Rad;
+    //procedure Srg;
+    //procedure Uro;
+  public
+    sFolder, sID : string;
+    arrHistory : array of array of string;
+  end;
+
+var
+  frmPatientData: TfrmPatientData;
+  sName, sSurname : string;
+implementation
+
+uses medicine_u, diabetic_u;
+
+{$R *.dfm}
+
+procedure TfrmPatientData.BitBtn1Click(Sender: TObject);
+begin
+  sFolder := edtFolder.Text;
+  sID := edtID.Text;
+
+  with dmHospital do
+    begin
+      if (qryHospitalDB.Locate('ID', sID,[])) AND (qryHospitalDB.Locate('FolderNumber', sFolder,[])) then
+        begin
+          LoadData; //procedure which contains procedures to load each object separatley
+          qryHospitalDB.SQL.Clear;
+          qryHospitalDB.SQL.Add('SELECT FirstName, Surname, ID, FolderNumber FROM PatientInfo WHERE ID = ' + QuotedStr(sID) + ' AND FolderNumber = ' + QuotedStr(sFolder));
+          qryHospitalDB.Open;
+          qryHospitalDB.First;
+          sName := qryHospitalDB['FirstName'];
+          sSurname := qryHospitalDB['Surname'];
+          ShowMessage('Loading Data for ' + sName + ' ' + sSurname); //Displays patient's full name with confirmation message
+        end;
+    end;
+end;
+
+procedure TfrmPatientData.LoadData;
+var
+  tMed : TextFile;
+  bFound, bStop : boolean;
+  iRow, K, J, L, iCol : integer;
+  sOut, sLine, sRec, sHeader : string;
+begin
+
+  //Access Levels need to be applied
+  //dbgPatientInfo
+  with dmHospital do
+    begin
+     qryHospitalDB.SQL.Clear;
+     qryHospitalDB.SQL.Add('SELECT * FROM PatientInfo');
+     qryHospitalDB.Open;
+    end;
+
+  //dbgBloodResults
+  with dmHospital do
+    begin
+     qryMinor.SQL.Clear;
+     qryMinor.SQL.Add('SELECT * FROM BloodResults');
+     qryMinor.Open;
+    end;
+
+  //redMedicalHistory
+  redMedicalHistory.Lines.Clear;
+  redMedicalHistory.Lines.Add('MEDICAL HISTORY' + #13 + ' ');
+
+  AssignFile(tMed, sFolder + '.txt');
+
+  Try
+    Reset(tMed);
+  Except
+    ShowMessage('Could not locate file ' + sFolder + '.txt');
+    Exit;
+  End;
+
+  K := 0;
+  while NOT EOF(tMed) do
+    begin
+      Readln(tMed, sLine);
+      Inc(K)
+    end;
+
+  bFound := False;
+  SetLength(arrHistory, K, 13);
+  iRow := -1;
+  while NOT EOF(tMed) do
+    begin
+      Inc(iRow);
+      sRec := '';
+      Readln(tMed, sLine);
+      iCol := 0;
+      
+      if sLine = 'General' then
+        iCol := 0;
+      if sLine = 'CardioCirculatory' then
+        iCol := 1;
+      if sLine = 'Endocrine' then
+        iCol := 2;
+      if sLine = 'ENT' then
+        iCol := 3;
+      if sLine = 'GastroIntestinal' then
+        iCol := 4;
+      if sLine = 'GenitoUrinary' then
+        iCol := 5;
+      if sLine = 'Macrovascular' then
+        iCol := 6;
+      if sLine = 'Microvascular' then
+        iCol := 7;
+      if sLine = 'MuscularSkeletal' then
+        iCol := 8;
+      if sLine = 'Neurological' then
+        iCol := 9;
+      if sLine = 'Opthalmology' then
+        iCol := 10;
+      if sLine = 'Respiratory' then
+        iCol := 11;
+      if sLine = 'Rheumotology' then
+        iCol := 12;
+
+      repeat
+        Readln(tMed, sLine);
+
+        case sLine[1] of
+          '*': bFound := True;
+
+          ':': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + 'Date: ' + sLine;
+               end;
+
+          '>': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Medication: ' + sLine;
+               end;
+
+          '+': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Notes: ' + sLine;
+               end;
+
+          '-': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Seen By: ' + sLine;
+               end
+
+          else sRec := sRec + #13 + sLine
+        end;
+      until bFound = True;
+
+       arrHistory[iRow, iCol] := sRec;
+    end;
+
+    J := 0;
+    for L := 0 to 12 do
+      begin
+        case L of
+          0: sHeader := 'General';
+          1: sHeader := 'CardioCirculatory';
+          2: sHeader := 'Endocrine';
+          3: sHeader := 'ENT';
+          4: sHeader := 'GastroIntestinal';
+          5: sHeader := 'GenitoUrinary';
+          6: sHeader := 'Macrovascular';
+          7: sHeader := 'Microvascular';
+          8: sHeader := 'MuscularSkeletal';
+          9: sHeader := 'Neurological';
+          10: sHeader := 'Opthalmology';
+          11: sHeader := 'Respiratory';
+          12: sHeader := 'Rheumotology';
+        end;
+        redMedicalHistory.Lines.Add(UpperCase(sHeader));
+        bStop := False;
+
+        while NOT(bStop) do
+          begin
+            sOut := arrHistory[J, L];
+
+            if sOut <> '' then
+              begin
+                redMedicalHistory.Lines.Add(sOut);
+                redMedicalHistory.Lines.Add('');
+                Inc(J);
+              end
+            else
+              begin
+                bStop := True;
+              end;
+          end;
+      end;
+end;
+
+procedure TfrmPatientData.FormShow(Sender: TObject);
+begin
+  //Insert Access level Code
+  with dmHospital do
+    begin
+     qryHospitalDB.SQL.Clear;
+     qryHospitalDB.SQL.Add('SELECT * FROM PatientInfo');
+     qryHospitalDB.Open;
+    end;
+end;
+
+procedure TfrmPatientData.btnNextClick(Sender: TObject);
+begin
+  //case frmDepts.iNext of
+    //0: Anst;
+    //1: ENT;
+    //2: Haemo;
+    //3: Med;
+    //4: Neuro;
+    //5: ObGyn;
+    //6: Onco;
+    //7: Orth;
+    //8: Ped;
+    //9: Phrm;
+    //10: Phys;
+    //11: Rad;
+    //12: Srg;
+    //13: Uro;
+  //end;
+  Med;
+end;
+
+procedure TfrmPatientData.Med;
+begin
+  //case frmMedicine.iNext of
+    //0: frmGeneral.Show;
+    //1: frmDiabetic.Show;
+    //2: frmRenal.Show;
+    //end;
+  frmDiabetic.Show;
+end;
+
+end.

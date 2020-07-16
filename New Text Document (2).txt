@@ -1,0 +1,241 @@
+  //redMedicalHistory
+  AssignFile(tMed, sFolder + '.txt');
+
+  Try
+    Reset(tMed);
+  Except
+    ShowMessage('Could not locate file ' + sFolder + '.txt');
+    Exit;
+  End;
+
+  K := 0;
+
+  while NOT EOF(tMed) do
+    begin
+      Readln(tMed, sLine);
+      Inc(K);
+      System.SetLength(arrHistory, K, 13);
+    end;
+
+  iRow := -1;
+  while NOT EOF(tMed) do
+    begin
+      Inc(iRow);
+      sRec := '';
+      Readln(tMed, sLine);
+
+      if sLine = 'General' then
+        iCol := 0;
+      if sLine = 'CardioCirculatory' then
+        iCol := 1;
+      if sLine = 'Endocrine' then
+        iCol := 2;
+      if sLine = 'ENT' then
+        iCol := 3;
+      if sLine = 'GastroIntestinal' then
+        iCol := 4;
+      if sLine = 'GenitoUrinary' then
+        iCol := 5;
+      if sLine = 'Macrovascular' then
+        iCol := 6;
+      if sLine = 'Microvascular' then
+        iCol := 7;
+      if sLine = 'MuscularSkeletal' then
+        iCol := 8;
+      if sLine = 'Neurological' then
+        iCol := 9;
+      if sLine = 'Opthalmology' then
+        iCol := 10;
+      if sLine = 'Respiratory' then
+        iCol := 11;
+      if sLine = 'Rheumotology' then
+        iCol := 12;
+
+      repeat
+        Readln(tMed, sLine);
+
+        case sLine[1] of
+          '*': bFound := True;
+
+          ':': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + 'Date: ' + sLine;
+               end;
+
+          '>': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Medication: ' + sLine;
+               end;
+
+          '+': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Notes: ' + sLine;
+               end;
+
+          '-': begin
+                 Delete(sLine, 1, 1);
+                 sRec := sRec + #13 + 'Seen By: ' + sLine;
+               end
+
+          else sRec := sRec + #13 + sLine
+        end;
+      until bFound = True;
+
+       arrHistory[iRow, iCol] := sRec;
+    end;
+
+    for L := 0 to 12 do
+      begin
+        while sOut <> '' do
+          begin
+            sOut := ar2History[J, L];
+            redMedicalHistory.Lines.Add(sOut);
+            redMedicalHistory.Lines.Add('');
+            Inc(J);
+          end;
+      end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+unit login_u;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, jpeg, ExtCtrls, StdCtrls, pathselect_u;
+
+type
+  TfrmLogIn = class(TForm)
+    btnLogIn: TButton;
+    imgDeptHealth: TImage;
+    ledStaffNo: TLabeledEdit;
+    ledPass: TLabeledEdit;
+    procedure btnLogInClick(Sender: TObject);
+  private
+    procedure ReadFile(sStaff, sPass : string);
+    procedure LogFalse(sMsg : string);
+    procedure NextPage;
+  public
+    Pass, Staff : string;
+  end;
+
+var
+  frmLogIn: TfrmLogIn;
+
+implementation
+
+{$R *.dfm}
+
+
+procedure TfrmLogIn.btnLogInClick(Sender: TObject);
+begin
+  Pass := ledPass.Text;
+  Staff := ledStaffNo.Text;
+  ReadFile(Staff, Pass);
+end;
+
+procedure TfrmLogIn.ReadFile(sStaff: string; sPass: string);
+var
+  tFile : TextFile;
+  bFound : boolean;
+  sLine, sFileNo, sFilePass, sMessage : string;
+  iPos : integer;
+begin
+  sMessage := '';
+  bFound := False;
+  AssignFile(tFile, 'login.txt');
+
+  Try
+    Reset(tFile);
+  Except
+    ShowMessage('File Not Found');
+    Exit;
+  End;
+
+  while NOT(EOF(TFile)) AND (bFound = False) do
+    begin
+      Readln(tFile, sLine);
+      iPos := Pos(',', sLine);
+      sFileNo := Copy(sLine, 1, iPos - 1);
+      Delete(sLine, 1, iPos + 1);
+      sFilePass := sLine;
+
+      if (sStaff = sFileNo) then
+        begin
+          if (sPass = sFilePass) then
+            begin
+              bFound := True;
+              NextPage;
+            end;
+        end
+      else
+        begin
+          sMessage := 'Password Is Not Invalid';
+          LogFalse(sMessage);
+        end;
+    end;
+
+  if (bFound = False) then
+    begin
+      sMessage := 'Staff Number Not Valid';
+      LogFalse(sMessage);
+    end;
+end;
+
+procedure TfrmLogIn.LogFalse(sMsg : string);
+begin
+  ShowMessage('Error: ' + sMsg + '!');
+  ledStaffNo.Text := '';
+  ledStaffNo.SetFocus;
+  ledPass.Text := '';
+end;
+
+procedure TfrmLogIn.NextPage;
+begin
+  ledStaffNo.Text := '';
+  ledStaffNo.SetFocus;
+  ledPass.Text := '';
+  frmSelection.ShowModal;
+end;
+
+end.
+
+
+
+
+
+    procedure SetDistolic(rDist : real);
+    procedure SetSystolic(rSyst : real);
+    procedure SetFasting(rFast : real);
+    procedure SetOverNight(rOvrNt : real);
+    procedure SetPostPrandial(rPP : real);
+    procedure SetHeartRate(iHR : integer);
+    procedure SetHeight(rHeight : real);
+    procedure SetWeight(iWeight : integer);
+    procedure SetWaist(iWaist : integer);
+    procedure SetMacro(bMacro : boolean);
+    procedure SetMicro(bMicro : boolean);
+    procedure SetPills(sPills : string);
+    procedure SetInsulin(sInsulin : string);
+    procedure SetInsulinDosage(rInsDos : real);
